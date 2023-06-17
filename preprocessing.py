@@ -30,14 +30,16 @@ def print_original_and_new_dataframes(func):
 
 
 
-def preprocess_categorial_features2(original_df, threshold_to_drop=1000):
+def preprocess_categorial_features(original_df, threshold_to_drop=1000):
+
+    PREFIX = "OHE"
     # create an instance of OneHotEncoder
     encoder = OneHotEncoder()
 
     # create a column transformer object
     ct = ColumnTransformer(
         transformers=[
-            ('one_hot_encoder', encoder, [col for col in original_df.columns if original_df[col].dtype == 'object'])
+            (PREFIX, encoder, [col for col in original_df.columns if original_df[col].dtype == 'object'])
         ],
         remainder='passthrough'
     )
@@ -55,6 +57,10 @@ def preprocess_categorial_features2(original_df, threshold_to_drop=1000):
     for col in encoded_df.columns:
         if encoded_df[col].sum() < threshold_to_drop:
             encoded_df.drop(col, axis=1, inplace=True)
+
+    # convert all boolean columns to type bool
+    added_columns = encoded_df.filter(regex=f'^{PREFIX}').columns
+    encoded_df[added_columns] = encoded_df[added_columns].astype(bool)
 
     return encoded_df
 
@@ -77,15 +83,20 @@ def remove_outliers(original_df, threshold=3):
         
         # Print the number of outliers replaced for the current column
         print(f"Number of outliers replaced in column '{column}': {num_outliers_replaced}")
-
-
-
-
-
     
     return df
 
 
+
+
+def fill_missing_categorial_features(df):
+    # fill with most common value the missing values in the 'C' column
+    most_common_value = df['C'].mode()[0]
+    df['C'].fillna(most_common_value, inplace=True)
+
+    # fill with most common value the missing values in the 'file_type_trid' column
+    most_common_value = df['file_type_trid'].mode()[0]
+    df['file_type_trid'].fillna(most_common_value, inplace=True)
 
 
 @print_original_and_new_dataframes
@@ -96,6 +107,8 @@ def preprocess_data(original_df):
     # drop the frist column (sha256)
     df.drop(df.columns[0], axis=1, inplace=True)
 
+    fill_missing_categorial_features(df)
+
     # Preprocess the 'file_type_trid' column using the 'file_type_prob_trid' column 
     # for every value in file_type_prob_trid column, if it's less than 30.0 change the matching value in file_type_trid to the most common value
     most_common_file_type_trid = df['file_type_trid'].mode()[0]
@@ -103,7 +116,7 @@ def preprocess_data(original_df):
     df.drop('file_type_prob_trid', axis=1, inplace=True)
     
     # preprocess categorial features
-    df = preprocess_categorial_features2(df)
+    df = preprocess_categorial_features(df)
 
     # convert all boolean columns to type bool
     boolean_columns = df.filter(regex='^has_').columns
