@@ -49,30 +49,26 @@ def find_best_number_of_neighbors(data, labels):
 
 def main():
     df = pd.read_csv(TRAIN_FILE_PATH)
-    
-    print("Original data frame:")
-    print(df.head())
+  
+    labels = df['label']
+    df.drop('label', axis=1, inplace=True)
 
     # preprocess the data frame
     df = preprocess_data(df)
-    print(".\n" * 3)
-
-    print("Preprocessed data frame:")
-    print(df.head())
    
-    labels = df['label']
-    df.drop('label', axis=1, inplace=True)
     data = df.values
 
     # plt show the variance of each column
     #df.var().plot(kind='bar')
     #plt.show()
 
-    # get the histogram of each column
-    #df.hist(figsize=(20,20))
-    #plt.show()
 
-    #find_best_number_of_neighbors(data, labels)
+    # print df colomns
+    print(f"=====> Columns: {df.columns}")
+
+    # get the histogram of each column
+    # df.hist(figsize=(20,20))
+    # plt.show()
 
     # models = []
     models = [KNeighborsClassifier(n_neighbors=9)] #, RandomForestClassifier(n_estimators=100, max_depth=2, random_state=0)]
