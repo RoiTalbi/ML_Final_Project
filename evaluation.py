@@ -1,11 +1,29 @@
 
 from sklearn.model_selection import cross_validate, train_test_split
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, f1_score, accuracy_score
 import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from matplotlib import pyplot as plt
 from sklearn.model_selection import GridSearchCV
+import time 
+
+
+
+
+# decorator to print the time it took to run the function
+def timeit(method):
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time() - ts
+        print(f"====> Time it took to run {method.__name__}: {te} seconds")
+        return result
+    return timed
+
+
+
+
 
 
 def evaluate_model_with_cross_validation(model, data, labels):
@@ -31,8 +49,10 @@ def evaluate_with_train_test_split(model, data, labels):
     # predict the test data
     y_pred = model.predict(X_test)
 
-    print("Classification report: \n", classification_report(y_test, y_pred))
-    print("Confusion matrix: \n", confusion_matrix(y_test, y_pred))
+    # print("Classification report: \n", classification_report(y_test, y_pred))
+    # print("Confusion matrix: \n", confusion_matrix(y_test, y_pred))
+    print("Accuracy score: ", accuracy_score(y_test, y_pred))
+    print("F1 score: ", f1_score(y_test, y_pred))
 
 
 
@@ -44,7 +64,8 @@ def find_best_params_for_rf(data, labels):
 
     param_grid = {
     'n_estimators': [300, 400, 500],
-    'max_depth': [15, 20, 30]
+    'max_depth': [15, 20, 30],
+    'n_jobs': [-1]
     }
     
     X_train, X_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, random_state=42)
@@ -61,10 +82,12 @@ def find_best_params_for_rf(data, labels):
 
 
 
+
+@timeit
 def evaluate_random_foreset(data, labels, coloumns):
 
     # create an instance of the model
-    rf = RandomForestClassifier(n_estimators=300, max_depth=15, random_state=42)
+    rf = RandomForestClassifier(n_estimators=300, max_depth=15, random_state=42, n_jobs=-1)
 
     # evaluate the model  
     evaluate_with_train_test_split(rf, data, labels)
@@ -81,3 +104,6 @@ def evaluate_model(model, data, labels):
     print(f"*******************  Evaluation model: {model.__class__.__name__} *******************")
 
     evaluate_model_with_cross_validation(model, data, labels)
+
+
+

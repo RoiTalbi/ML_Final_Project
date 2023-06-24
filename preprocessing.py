@@ -30,18 +30,20 @@ def print_original_and_new_dataframes(func):
 
 
 
-def preprocess_categorial_features(original_df, threshold_to_drop=1000):
+def preprocess_categorial_features(original_df, threshold_to_drop=250):
 
     PREFIX = "OHE"
     # create an instance of OneHotEncoder
     encoder = OneHotEncoder()
 
-    # create a column transformer object
+    # create a column transformer object.
+    # Columns: 'C' , 'file_type_trid' are categorial
     ct = ColumnTransformer(
         transformers=[
             (PREFIX, encoder, [col for col in original_df.columns if original_df[col].dtype == 'object'])
         ],
-        remainder='passthrough'
+        remainder='drop'
+        #remainder='passthrough'
     )
 
     # fit and transform the data
@@ -51,16 +53,23 @@ def preprocess_categorial_features(original_df, threshold_to_drop=1000):
     dense_array = encoded_data.toarray()
 
     # create a new DataFrame with the encoded data
-    encoded_df = pd.DataFrame(dense_array, columns=ct.get_feature_names())
+    encoded_df = pd.DataFrame(dense_array, columns=ct.get_feature_names_out())
 
     # now drop all the columns that have less than 'threshold_to_drop' values of that category
     for col in encoded_df.columns:
         if encoded_df[col].sum() < threshold_to_drop:
             encoded_df.drop(col, axis=1, inplace=True)
+    
+    # rename all columns that their name starts with 'remainder' to their original name
+    # encoded_df.rename(columns={col: col.split("_")[1] for col in encoded_df.columns if col.startswith("remainder")}, inplace=True)
 
     # convert all boolean columns to type bool
     added_columns = encoded_df.filter(regex=f'^{PREFIX}').columns
     encoded_df[added_columns] = encoded_df[added_columns].astype(bool)
+
+    # drop object column in original df and contact the encoded data with the original data
+    original_df.drop(columns=[col for col in original_df.columns if original_df[col].dtype == 'object'], inplace=True)
+    encoded_df = pd.concat([original_df, encoded_df], axis=1)
 
     return encoded_df
 
@@ -88,7 +97,6 @@ def remove_outliers(original_df, threshold=3):
 
 
 
-
 def fill_missing_categorial_features(df):
     # fill with most common value the missing values in the 'C' column
     most_common_value = df['C'].mode()[0]
@@ -99,7 +107,7 @@ def fill_missing_categorial_features(df):
     df['file_type_trid'].fillna(most_common_value, inplace=True)
 
 
-@print_original_and_new_dataframes
+# @print_original_and_new_dataframes
 def preprocess_data(original_df):
 
     df = original_df.copy()
@@ -138,6 +146,9 @@ def preprocess_data(original_df):
 
     # remove outliers
     df = remove_outliers(df)
+
+    # print the number of missing values
+    print(f"Number of missing values: {df.isnull().sum().sum()}")
 
     return df
     
