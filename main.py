@@ -10,7 +10,7 @@ import sys
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
-
+from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import cross_validate
 from sklearn.preprocessing import OneHotEncoder
 from matplotlib import pyplot as plt
@@ -83,6 +83,19 @@ def debug_show_histogram(df):
     plt.show()
     
 
+def find_optimal_number_of_components_with_grid_search(X):
+    pca = PCA()
+    param_grid = {
+        'n_components': range(5,25)
+    }
+    grid_search = GridSearchCV(pca, param_grid=param_grid)
+
+    ohe_df = X.filter(regex='^OHE', axis=1)
+    grid_search.fit(ohe_df)
+    
+    print(f"Best params for PCA: {grid_search.best_params_['n_components']}")
+
+
 
 def main():
     df = pd.read_csv(TRAIN_FILE_PATH)
@@ -94,18 +107,25 @@ def main():
     # preprocess the data frame
     df = preprocess_data(df)
 
-    df = preform_pca(df, components=8) 
+    df = preform_pca(df, components=9) 
+
+    #find_optimal_number_of_components_with_grid_search(df)
 
     data = df.values
 
-    models = []
+    models = [svm.SVC(kernel='linear', degree=3)]
+
     # models = [KNeighborsClassifier(n_neighbors=9)] 
     # models = [RandomForestClassifier(n_estimators=300, max_depth=15, random_state=0)]
 
     for model in models:
         evaluate_with_train_test_split(model, data, labels)
 
-    evaluate_random_foreset(data, labels, None) # coloumns=df.columns)
+    # evaluate_random_foreset(data, labels, None) # coloumns=df.columns)
+
+    # find_best_params_for_rf(data, labels)
+
+
 
 
     

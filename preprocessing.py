@@ -30,7 +30,7 @@ def print_original_and_new_dataframes(func):
 
 
 
-def preprocess_categorial_features(original_df, threshold_to_drop=250):
+def preprocess_categorial_features(original_df, threshold_to_drop=50):
 
     PREFIX = "OHE"
     # create an instance of OneHotEncoder

@@ -87,7 +87,7 @@ def find_best_params_for_rf(data, labels):
 def evaluate_random_foreset(data, labels, coloumns):
 
     # create an instance of the model
-    rf = RandomForestClassifier(n_estimators=300, max_depth=15, random_state=42, n_jobs=-1)
+    rf = RandomForestClassifier(n_estimators=400, max_depth=30, random_state=42, n_jobs=-1)
 
     # evaluate the model  
     evaluate_with_train_test_split(rf, data, labels)
